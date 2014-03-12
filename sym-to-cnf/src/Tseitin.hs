@@ -13,29 +13,34 @@ import Types
 
 
 data St = St
-  {nextVar :: Lit
-  ,varCache :: IntMap Lit
+  {nextVar  :: Var
+  ,varCache :: IntMap Var
     -- cache intermediate variable for each two-literal conjunction
   }
 
 
 tseitin :: Int -> [Cube] -> CNF
 tseitin totalVars cubes
-  = evalState
-    (concat <$> mapM ts cubes)
-    (St (fromIntegral $ totalVars+1) Map.empty)
+  = (`evalState` St (fromIntegral $ totalVars+1) Map.empty)
+  $ do
+    (vars, clauses) <- unzip <$> mapM ts cubes
+    return $ vars : concat clauses
   where
     ts (x:xs) = loop [] x xs
     ts _ = error "BUG"
 
-    loop res x [] = return $ [x] : res
+    loop :: CNF -> Lit -> Cube -> State St (Lit, CNF)
+    loop res x [] = return (x, res)
     loop res x (y:ys) = do
-      z <- newVar x y
-      let eq = [[-z,x],[-z,y],[z,-x,-y]] -- CNF(z<=>x&y)
-      loop (eq ++ res) z ys
+      newVar x y >>= \case
+        Left  z -> loop res (fromIntegral z) ys -- cache hit, old variable
+        Right z' -> do -- cache miss, new variable
+          let z  = fromIntegral z'
+              eq = [[-z,x],[-z,y],[z,-x,-y]] -- CNF(z<=>x&y)
+          loop (eq ++ res) z ys
 
 
-newVar :: Lit -> Lit -> State St Lit
+newVar :: Lit -> Lit -> State St (Either Var Var)
 newVar x y = do
   -- we encode pair of literals as single 64-bit word
   -- to use to as a key in IntMap
@@ -46,7 +51,7 @@ newVar x y = do
   St{..} <- get
   -- NB: we silently assume 64-bit Ints here
   case Map.lookup key varCache of
-    Just var -> return var
+    Just var -> return $ Left var
     Nothing  -> do
       put $ St (nextVar+1) (Map.insert key nextVar varCache)
-      return nextVar
+      return $ Right nextVar
