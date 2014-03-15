@@ -28,9 +28,9 @@ realMain :: (Int, String) -> IO ()
 realMain (totalVars, method) = do
   (usedVars, codedCubes) <- parseSym
   let cubes = map (decodeCube usedVars) codedCubes
-  L.putStr $ dimacs totalVars
+  L.putStr
     $ case method of
-      "tseitin" -> tseitin totalVars cubes
+      "tseitin" -> uncurry dimacs $ tseitin totalVars cubes
       _ -> error "Invalid method"
 
 

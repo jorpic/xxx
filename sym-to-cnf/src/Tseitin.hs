@@ -19,12 +19,13 @@ data St = St
   }
 
 
-tseitin :: Int -> [Cube] -> CNF
+tseitin :: Int -> [Cube] -> (Int, CNF)
 tseitin totalVars cubes
   = (`evalState` St (fromIntegral $ totalVars+1) Map.empty)
   $ do
     (vars, clauses) <- unzip <$> mapM ts cubes
-    return $ vars : concat clauses
+    totalVars' <- nextVar <$> get
+    return (fromIntegral totalVars' - 1, vars : concat clauses)
   where
     ts (x:xs) = loop [] x xs
     ts _ = error "BUG"
