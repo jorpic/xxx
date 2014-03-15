@@ -25,7 +25,7 @@ tseitin totalVars cubes
   $ do
     (vars, clauses) <- unzip <$> mapM ts cubes
     totalVars' <- nextVar <$> get
-    return (fromIntegral totalVars' - 1, vars : concat clauses)
+    return (fromIntegral totalVars' - 1, ClauseN vars : concat clauses)
   where
     ts (x:xs) = loop [] x xs
     ts _ = error "BUG"
@@ -37,7 +37,7 @@ tseitin totalVars cubes
         Left  z -> loop res (fromIntegral z) ys -- cache hit, old variable
         Right z' -> do -- cache miss, new variable
           let z  = fromIntegral z'
-              eq = [[-z,x],[-z,y],[z,-x,-y]] -- CNF(z<=>x&y)
+              eq = [Clause2 (-z) x, Clause2 (-z) y, Clause3 z (-x) (-y)] -- CNF(z<=>x&y)
           loop (eq ++ res) z ys
 
 

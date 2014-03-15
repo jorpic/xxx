@@ -63,4 +63,7 @@ dimacs totalVars clauses
   = L.unlines $ cnfHeader : map tr clauses
   where
     cnfHeader = L.pack $ printf "p dnf %i %i" totalVars (length clauses)
-    tr = L.unwords . map (L.pack . show) . (++[0])
+    tr = \case
+      Clause2 a b   -> L.pack $ unwords [show a, show b, "0"]
+      Clause3 a b c -> L.pack $ unwords [show a, show b, show c, "0"]
+      ClauseN xs    -> L.unwords $ map (L.pack . show) $ xs++[0]
