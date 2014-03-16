@@ -27,9 +27,9 @@ main = getArgs >>= \case
 parseRes :: Text -> IntMap Int
 parseRes res = case L.lines res of
   ["SAT", vars] -> Map.fromList
-    [(abs x, signum (x+1) `div` 2)
+    [(abs x, x)
     | v <- L.words vars
-    , let Right (x,_)  = L.decimal v
+    , let Right (x,_)  = L.signed L.decimal v
     ]
   _ -> error "UNSAT or invalid format"
 
