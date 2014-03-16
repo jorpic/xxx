@@ -9,7 +9,8 @@ import qualified Data.IntMap as Map
 import Data.Bits
 import Data.Word
 
-import Types
+import CNF
+import Symbol
 
 
 data St = St
