@@ -64,7 +64,7 @@ dimacs :: Int -> CNF -> Text
 dimacs totalVars clauses
   = L.unlines $ cnfHeader : map tr clauses
   where
-    cnfHeader = L.pack $ printf "p dnf %i %i" totalVars (length clauses)
+    cnfHeader = L.pack $ printf "p cnf %i %i" totalVars (length clauses)
     tr = \case
       Clause2 a b   -> L.pack $ unwords [show a, show b, "0"]
       Clause3 a b c -> L.pack $ unwords [show a, show b, show c, "0"]
