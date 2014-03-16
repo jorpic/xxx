@@ -33,6 +33,7 @@ executable sym-to-cnf
     base >=4.6 && <4.7,
     containers == 0.5.*,
     optparse-applicative == 0.7.*,
+    split == 0.2.*,
     transformers == 0.3.*,
     text == 1.1.*
 

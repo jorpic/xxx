@@ -6,6 +6,7 @@ import qualified Data.Text.Lazy as L
 import qualified Data.Text.Lazy.IO as L
 import qualified Data.Text.Lazy.Read as L
 import Text.Printf
+import Data.List.Split
 import Data.Word
 import Data.Bits ((.&.))
 import Options.Applicative
@@ -26,16 +27,18 @@ options = (,)
 
 realMain :: (Int, String) -> IO ()
 realMain (totalVars, method) = do
-  (usedVars, codedCubes) <- parseSym
-  let cubes = map (decodeCube usedVars) codedCubes
+  ls <- L.lines <$> L.getContents
+  let syms = map
+        (\(vars, cubes) -> map (decodeCube vars) cubes)
+        (parseSyms ls)
   L.putStr
     $ case method of
-      "tseitin" -> uncurry dimacs $ tseitin totalVars cubes
+      "tseitin" -> uncurry dimacs $ tseitin totalVars syms
       _ -> error "Invalid method"
 
 
 type EncodedCube = Word64
--- i-th bit represents if i-th variable is negated or not in the cube
+-- i-th bit represents whether i-th variable is negated or not in the cube
 
 decodeCube :: [Var] -> EncodedCube -> Cube
 decodeCube varMap w =
@@ -45,11 +48,10 @@ decodeCube varMap w =
   ]
 
 
-parseSym :: IO ([Var], [EncodedCube])
-parseSym = do
-  vars <- read . L.unpack <$> L.getLine
-  rows <- map fromHex . L.lines <$> L.getContents
-  return (vars, rows)
+parseSyms :: [Text] -> [([Var], [EncodedCube])]
+parseSyms
+  = map (\(hd:sym) -> (read $ L.unpack hd, map fromHex sym))
+  . split (dropInitBlank $ keepDelimsL $ whenElt ("[" `L.isPrefixOf`))
 
 
 fromHex :: Text -> EncodedCube

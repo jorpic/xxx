@@ -19,16 +19,18 @@ data St = St
   }
 
 
-tseitin :: Int -> [Cube] -> (Int, CNF)
-tseitin totalVars cubes
+tseitin :: Int -> [[Cube]] -> (Int, CNF)
+tseitin totalVars syms
   = (`evalState` St (fromIntegral $ totalVars+1) Map.empty)
   $ do
-    (vars, clauses) <- unzip <$> mapM ts cubes
+    cnf <- concat <$> mapM convertSym syms
     totalVars' <- nextVar <$> get
-    return (fromIntegral totalVars' - 1, ClauseN vars : concat clauses)
+    return (fromIntegral totalVars' - 1, cnf)
   where
-    ts (x:xs) = loop [] x xs
-    ts _ = error "BUG"
+    convertSym :: [Cube] -> State St CNF
+    convertSym cubes = do
+      (vars, clauses) <- unzip <$> mapM (\(x:xs) -> loop [] x xs) cubes
+      return $ ClauseN vars : concat clauses
 
     loop :: CNF -> Lit -> Cube -> State St (Lit, CNF)
     loop res x [] = return (x, res)
