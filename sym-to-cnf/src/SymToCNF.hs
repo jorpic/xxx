@@ -6,7 +6,9 @@ import qualified Data.Text.Lazy.IO as L
 
 import Symbol (parseSymbols)
 import CNF (dimacs)
+
 import Tseitin (tseitin)
+import BDD (viaBDD)
 
 
 main :: IO ()
@@ -25,4 +27,5 @@ realMain (totalVars, method) = do
   L.putStr
     $ case method of
       "tseitin" -> uncurry dimacs $ tseitin totalVars syms
+      "bdd"     -> uncurry dimacs $ viaBDD  totalVars syms
       _ -> error "Invalid method"
