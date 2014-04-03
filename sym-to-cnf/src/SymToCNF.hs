@@ -2,30 +2,30 @@
 module Main where
 
 import Options.Applicative
+import qualified Data.Text.Lazy as L
 import qualified Data.Text.Lazy.IO as L
 
-import Symbol (parseSymbols)
-import CNF (dimacs)
-
-import Tseitin (tseitin)
-import BDD (viaBDD)
+import Symbol (parseSymbol)
+import CNF
+import BDD (bddTseitin)
 
 
 main :: IO ()
-main = execParser (info (helper <*> options) fullDesc) >>= realMain
+main = execParser (info (helper <*> options) fullDesc)
+  >>= realMain
 
-
-options :: Parser (Int,String)
-options = (,)
-  <$> option (long "total-vars")
+options :: Parser (Var, String, [String])
+options = (,,)
+  <$> option (long "max-var")
   <*> strOption (long "method")
+  <*> many (argument Just idm)
 
 
-realMain :: (Int, String) -> IO ()
-realMain (totalVars, method) = do
-  Just (_,syms) <- fmap unzip . parseSymbols <$> L.getContents
+realMain :: (Var, String, [String]) -> IO ()
+realMain (maxVar, method, symFiles) = do
+  symData <- mapM (fmap (parseSymbol . L.lines) . L.readFile) symFiles
+  let Just (_,syms) = unzip <$> sequence symData
   L.putStr
     $ case method of
-      "tseitin" -> uncurry dimacs $ tseitin totalVars syms
-      "bdd"     -> uncurry dimacs $ viaBDD  totalVars syms
+      "bdd"     -> uncurry dimacs $ bddTseitin maxVar syms
       _ -> error "Invalid method"

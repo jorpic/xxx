@@ -6,26 +6,23 @@ import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as L
 import Text.Printf
 import Data.Word (Word32)
-import Data.Int (Int32)
 
 
 type Var = Word32
-type Lit = Int32  -- variable or its negation
-
-data Clause -- Disjunction of literals
-  = Clause2 !Lit !Lit
-  | Clause3 !Lit !Lit !Lit
-  | ClauseN [Lit]
-
+type Lit = Int      -- variable or its negation
+type Clause = [Lit] -- Disjunction of literals
 type CNF = [Clause] -- Conjunction of clauses
 
+var2lit :: Var -> Lit
+var2lit = fromIntegral
 
-dimacs :: Int -> CNF -> Text
-dimacs totalVars clauses
+lit2var :: Lit -> Var
+lit2var = fromIntegral . abs
+
+
+dimacs :: CNF -> Var -> Text
+dimacs clauses totalVars
   = L.unlines $ cnfHeader : map tr clauses
   where
     cnfHeader = L.pack $ printf "p cnf %i %i" totalVars (length clauses)
-    tr = \case
-      Clause2 a b   -> L.pack $ unwords [show a, show b, "0"]
-      Clause3 a b c -> L.pack $ unwords [show a, show b, show c, "0"]
-      ClauseN xs    -> L.unwords $ map (L.pack . show) $ xs++[0]
+    tr xs = L.unwords $ map (L.pack . show) $ xs++[0]

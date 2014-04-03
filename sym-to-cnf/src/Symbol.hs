@@ -1,28 +1,19 @@
 
-module Symbol (parseSymbol, parseSymbols, Cube, Symbol) where
+module Symbol (parseSymbol, Cube, Symbol) where
 
 import Data.Text.Lazy (Text)
 import qualified Data.Text.Lazy as L
 import qualified Data.Text.Lazy.Read as L
-import Data.List.Split
-import Data.Int
 import Data.Word
 import Data.Bits ((.&.))
 
 
-type Lit = Int32
+type Lit = Int
 type Var = Word32
 
 type Cube = [Lit]   -- Conjunction of literals
 type Symbol = ([Var], [Cube])
 
-
-parseSymbols :: Text -> Maybe [Symbol]
-parseSymbols
-  = sequence
-  . map parseSymbol
-  . split (dropInitBlank $ keepDelimsL $ whenElt ("[" `L.isPrefixOf`))
-  . L.lines
 
 
 parseSymbol :: [Text] -> Maybe Symbol

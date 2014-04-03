@@ -17,7 +17,7 @@ executable random-sym
   build-depends:
     base >=4.6 && <4.7,
     containers == 0.5.*,
-    optparse-applicative == 0.7.*,
+    optparse-applicative == 0.8.*,
     mwc-random == 0.13.*
 
   default-extensions: TupleSections
@@ -32,15 +32,14 @@ executable sym-to-cnf
   build-depends:
     base >=4.6 && <4.7,
     containers == 0.5.*,
-    optparse-applicative == 0.7.*,
-    obdd == 0.2.7,
+    optparse-applicative == 0.8.*,
+    obdd == 0.3.1,
     split == 0.2.*,
     transformers == 0.3.*,
     text == 1.1.*
 
   default-extensions:
-    OverloadedStrings,
-    LambdaCase, RecordWildCards, TupleSections
+    OverloadedStrings, LambdaCase, TupleSections
 
 
 executable check-res
