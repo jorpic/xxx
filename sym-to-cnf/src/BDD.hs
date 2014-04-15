@@ -44,12 +44,16 @@ symbolToCNF sym = do
         ([[]],[])   -> return [[c]]
         _ -> do
           x <- var2lit <$> nextVar
+          -- x => ITE c t f
+          -- ≡ x => (c ∧ t) ∨ (-c ∧ f)
+          -- ≡ (-c ∨ t ∨ -x) ∧ (c ∨ f ∨ -x)
+          -- And (f ∨ t ∨ -x) for better implicativity
           tell $ case (l,r) of
-            ([[f]],[])    -> [[-c,x],[c,f,-x],[-f,x]]
-            ([[f]],[[]])  -> [[f,-x],[-c,-x],[c,-f,x],[f,-x]]
-            ([[f]],[[t]]) -> [[f,t,-x],[-c,-t,x],[-c,t,-x],[c,-f,x],[c,f,-x]]
-            ([[]], [[t]]) -> [[t,-x],[-c,-t,x],[c,-x],[t,-x]]
-            ([],   [[t]]) -> [[-c,t,-x],[c,x],[-t,x]]
+            ([[f]],[])    -> [                   [c,f,-x]]
+            ([[f]],[[]])  -> [[f,  -x],[-c,  -x],[c,f,-x]]
+            ([[f]],[[t]]) -> [[f,t,-x],[-c,t,-x],[c,f,-x]]
+            ([[]], [[t]]) -> [[  t,-x],[-c,t,-x],[c,  -x]]
+            ([],   [[t]]) -> [         [-c,t,-x]         ]
             _ -> error $ "Malformed BDD: " ++ show (v,l,r)
           return [[x]]
     )
