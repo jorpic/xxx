@@ -32,7 +32,6 @@ bddTseitin maxVar symbols
 
 symbolToCNF :: [Cube] -> M ()
 symbolToCNF sym = do
-  -- error (toDot $ symbolToBDD sym)
   top <- BDD.foldM
     (\case
       True  -> return []   -- AND [] = 1
@@ -47,16 +46,15 @@ symbolToCNF sym = do
           x <- var2lit <$> nextVar
           tell $ case (l,r) of
             ([[f]],[])    -> [[-c,x],[c,f,-x],[-f,x]]
-            ([[f]],[[]])  -> [[-c,-x],[c,-f,x],[f,-x]]
-            ([[f]],[[t]]) -> [[-c,-t,x],[-c,t,-x],[c,-f,x],[c,f,-x]]
-            ([[]], [[t]]) -> [[-c,-t,x],[c,-x],[t,-x]]
+            ([[f]],[[]])  -> [[f,-x],[-c,-x],[c,-f,x],[f,-x]]
+            ([[f]],[[t]]) -> [[f,t,-x],[-c,-t,x],[-c,t,-x],[c,-f,x],[c,f,-x]]
+            ([[]], [[t]]) -> [[t,-x],[-c,-t,x],[c,-x],[t,-x]]
             ([],   [[t]]) -> [[-c,t,-x],[c,x],[-t,x]]
             _ -> error $ "Malformed BDD: " ++ show (v,l,r)
           return [[x]]
     )
     (symbolToBDD sym)
   tell top
-
 
 
 symbolToBDD :: [Cube] -> OBDD Var
