@@ -31,11 +31,11 @@ def main():
   print 'number of equations:', lenEqs
 
   plt.subplot(131)
-  hist('monoms per eq', map(len, eqs), 10)
+  hist('monoms per eq', map(len, eqs), 100)
   plt.subplot(132)
-  hist('vars per eq', map(lambda eq: len(eqVars(eq)), eqs), 30)
+  hist('vars per eq', map(lambda eq: len(eqVars(eq)), eqs), 100)
   plt.subplot(133)
-  hist('eq degree', map(lambda eq: max(map(len,eq)), eqs), 30)
+  hist('eq degree', map(lambda eq: max(map(len,eq)), eqs), 100)
   plt.show()
 
   varUsage = {}
@@ -45,7 +45,7 @@ def main():
   print 'number of variables:', len(varUsage)
 
   print filter(lambda (i,v): len(v) == 1, varUsage.iteritems())
-  hist('var usage', map(len, varUsage.itervalues()), 30)
+  hist('var usage', map(len, varUsage.itervalues()), 100)
   plt.show()
 
 
