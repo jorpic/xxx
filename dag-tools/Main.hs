@@ -2,6 +2,7 @@
 
 import Control.Applicative
 import Data.List
+import qualified Data.IntSet as Set
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as Map
 import System.Environment (getArgs)
@@ -20,16 +21,17 @@ main = do
       mapM_ print =<< fixInputs
         <$> (parseBits <$> readFile inBits)
         <*> (map read . lines <$> getContents)
-    ["fix-outputs", outBits] -> return ()
-    ["to-system"] -> return ()
+    ["to-system", outBits] ->
+      mapM_ print =<< fixOutputs
+        <$> (parseBits <$> readFile outBits)
+        <*> (map read . lines <$> getContents)
     _ -> error
       $  "Usage: dag-tools <command>\n\
          \  Commands:\n\
          \    eval-check  <in-bits> <out-bits>\n\
          \    eval-trace  <in-bits>\n\
          \    fix-inputs  <in-bits>\n\
-         \    fix-outputs <out-bits>\n\
-         \    to-system"
+         \    to-system <out-bits>"
 
 
 evalCheck :: IntMap Bool -> IntMap Bool -> Dag -> Bool
@@ -72,8 +74,42 @@ fixInputs inBits = loop Map.empty
         poly'    -> (ref, Node poly') : loop inlMap exs
 
 
+fixOutputs :: IntMap Bool -> Dag -> System
+fixOutputs outBits = loop [] Set.empty Map.empty . reverse
+  where
+    loop res _ _ [] = res
+    loop res used inlMap ((ref,ex):exs) = case ex of
+      Inp _      -> loop res used inlMap exs
+      Out o poly -> case Map.lookup o outBits of
+        Nothing -> loop res used inlMap exs -- skip don't care outputs
+        Just v  -> loop' $ inline inlMap (if v then []:poly else poly)
+      Node poly
+        | not $ Set.member ref used -> loop res used inlMap exs -- skip unused refs
+        | otherwise                 -> loop' $ inline inlMap ([ref] : poly)
+      where
+        -- FIXME: it is enough to do straightforward conversion here
+        -- all simplifications will be done in system-tools
+        loop' = \case
+          []           -> error "Truism inferred" -- should we fail?
+          [[]]         -> error "Conflict inferred"
+          [[x]]        -> loop'' (use [x])   (Map.insert x [] inlMap)
+          [[],[x]]     -> loop'' (use [x])   (Map.insert x [[]] inlMap) -- generalize to xs
+          [[x],[y]]    -> loop'' (use [x,y]) (Map.insert y [[x]] inlMap)
+          [[],[x],[y]] -> loop'' (use [x,y]) (Map.insert y [[],[x]] inlMap)
+          -- TODO : x \/ y = 0, -x \/  y = 0,  x \/ -y = 0
+          eq           -> loop (eq:res) (use $ concat eq) inlMap exs
+
+        use = foldr Set.insert used
+
+        -- new facts can affect already converted equations
+        -- so we are trying to simplify them again
+        loop'' used' inlMap' = loop (map (inline inlMap') res) used' inlMap' exs
+
+
+
 type Ref = Int
 type Poly = [[Ref]]
+type System = [Poly]
 data Exp
   = Inp Int
   | Out Int Poly
