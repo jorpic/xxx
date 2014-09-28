@@ -12,11 +12,10 @@ main :: IO ()
 main = do
   getArgs >>= \case
     ["eval-check", inBits, outBits] ->
-      print =<< evalCheck
+      (mapM_ print . Map.toAscList) =<< evalCheck
         <$> (parseBits <$> readFile inBits)
         <*> (parseBits <$> readFile outBits)
         <*> (map read . lines <$> getContents)
-    ["eval-trace", inBits] -> return () -- print bits from evalCheck
     ["fix-inputs", inBits] ->
       mapM_ print =<< fixInputs
         <$> (parseBits <$> readFile inBits)
@@ -29,15 +28,14 @@ main = do
       $  "Usage: dag-tools <command>\n\
          \  Commands:\n\
          \    eval-check  <in-bits> <out-bits>\n\
-         \    eval-trace  <in-bits>\n\
          \    fix-inputs  <in-bits>\n\
          \    to-system <out-bits>"
 
 
-evalCheck :: IntMap Bool -> IntMap Bool -> Dag -> Bool
+evalCheck :: IntMap Bool -> IntMap Bool -> Dag -> IntMap Bool
 evalCheck inBits outBits = loop Map.empty
   where
-    loop _ [] = True
+    loop bits [] = bits
     loop bits ((ref,ex):exs) = case ex of
       Inp i -> case Map.lookup i inBits of
         Nothing -> error $ "Input is not fixed " ++ show i

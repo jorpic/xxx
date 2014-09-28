@@ -24,7 +24,10 @@ type Var    = Int
 --  - FES быстрее перебирает меньшее число уравнений более высоких степеней 
 main :: IO ()
 main = getArgs >>= \case
-  ["check", values] -> error "Not implemented"
+  ["check", values] -> do
+    eqs  <- map read . lines <$> getContents
+    bits <- Map.fromList . map read . lines <$> readFile values
+    mapM_ print $ filter (not . check bits) eqs
   ["delinearize"] -> do
     eqs <- map read . lines <$> getContents
     let sys = Map.fromList $ zip [0..] $ reverse eqs
@@ -36,6 +39,15 @@ main = getArgs >>= \case
   _ -> error "Usage: system-tools (delinearize | check <vals>)"
 
 -- TODO: gather candidates instead of banning
+
+
+check :: Map Int Bool -> Poly -> Bool
+check bits = evalXor
+  where
+    evalXor = even . length . filter evalAnd
+    evalAnd = all evalVar
+    evalVar = (bits Map.!)
+
 
 transform :: System -> Map Var [PolyIx] -> Set PolyIx -> IO System
 transform sys varUsage badEqs = case getEq badEqs sys of
@@ -132,7 +144,7 @@ inline v inlPoly = simpl . concatMap (simplAnd [[]])
       (polyMul res $ if x == v then inlPoly else [[x]])
       xs
 
-    simpl :: Poly -> Poly
-    simpl
-      = map head . filter (odd . length) . group . sort
-      . map (nub . sort)
+simpl :: Poly -> Poly
+simpl
+  = map head . filter (odd . length) . group . sort
+  . map (nub . sort)
