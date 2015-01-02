@@ -12,7 +12,7 @@ executable group-eqs
   ghc-options:         -Wall -O2
   main-is:             Main.hs
   build-depends:
-    base >=4.6 && <4.7,
+    base >=4.6 && <4.8,
     containers == 0.5.*,
     random == 1.0.*
 

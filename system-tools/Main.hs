@@ -8,6 +8,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.List
 import System.Environment
+import Text.Printf
 
 
 type PolyIx = Int
@@ -17,17 +18,23 @@ type Monom  = [Var]
 type Var    = Int
 
 
--- Делинеаризация системы.
---  - избавляемся от промежуточных переменных;
---  - уравнения с большим числом переменных будут лучше поддаваться группировке;
---    - больше ядро группы => более компактные символы;
---  - FES быстрее перебирает меньшее число уравнений более высоких степеней 
 main :: IO ()
 main = getArgs >>= \case
+  ["to-graph"] -> do
+    eqs  <- map read . lines <$> getContents
+    let maxVar = maximum $ concatMap concat eqs :: Var
+    printf "%i %i\n" (length eqs) maxVar
+    let edges = map (nub . concat) eqs
+    mapM_ (putStrLn . unwords . map show) edges
   ["check", values] -> do
     eqs  <- map read . lines <$> getContents
     bits <- Map.fromList . map read . lines <$> readFile values
     mapM_ print $ filter (not . check bits) eqs
+  -- Делинеаризация системы.
+  --  - избавляемся от промежуточных переменных;
+  --  - уравнения с большим числом переменных будут лучше поддаваться группировке;
+  --    - больше ядро группы => более компактные символы;
+  --  - FES быстрее перебирает меньшее число уравнений более высоких степеней.
   ["delinearize"] -> do
     eqs <- map read . lines <$> getContents
     let sys = Map.fromList $ zip [0..] $ reverse eqs
@@ -36,7 +43,7 @@ main = getArgs >>= \case
               [(v,[k]) | (k,poly) <- Map.toList sys, v <- concat poly]
     sys' <- transform sys var Set.empty
     mapM_ print $ filter (not.null) $ Map.elems sys'
-  _ -> error "Usage: system-tools (delinearize | check <vals>)"
+  _ -> error "Usage: system-tools (delinearize | check <vals> | to-graph)"
 
 -- TODO: gather candidates instead of banning
 

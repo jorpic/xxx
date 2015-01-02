@@ -10,3 +10,4 @@ function install {
 
 install dag-tools
 install system-tools
+install group-eqs

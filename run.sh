@@ -16,8 +16,8 @@ OUT_TEST=$5
 
 PATH=".cabal-sandbox/bin:$PATH"
 
-rm -rf .test
-mkdir .test
+# rm -rf .test
+# mkdir .test
 
 echo == Eval DAG and record trace
 time dag-tools eval-check $INP_TEST $OUT_TEST < $DAG > .test/trace.vals

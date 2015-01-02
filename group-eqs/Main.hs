@@ -16,6 +16,13 @@ type Var = Int
 type Equ = [[Var]]
 type Group = [Equ]
 
+-- NB. maybe we don't need to care about eliminated variables at this point
+--  - we can't exclude them from core
+--  - it is nice to have many of them in a group, but we probably will get
+--  this automatically for large and dense groups
+--  - removing them from symbols may save a few bits per solution
+--  - they don't participate in symbol agreeing
+--  - it seems reasonable to filter them out before building BDDs
 
 main :: IO ()
 main = do
@@ -60,8 +67,8 @@ growGroup globalVarUsage grp sys
       , let grpVarUsage= countVarUsage grp'
       , let elimVars   = eliminatableVars globalVarUsage grpVarUsage
       , commonVars > 0
-      , grpVars' - length elimVars < 65
-      , grpVars' - length freeEqs < 28 -- 2^27 * 8 = 1Gb
+      , grpVars' - length elimVars <= 128
+      , grpVars' - length freeEqs <= 42
       ]
 
 
